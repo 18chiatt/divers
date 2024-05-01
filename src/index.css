@@ -16,6 +16,7 @@ code {
 
 .baseArrow {
 	transition: 2s;
+	max-width: 9%;
 }
 
 @keyframes pulserSuccess {

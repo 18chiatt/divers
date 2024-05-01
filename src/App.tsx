@@ -175,7 +175,7 @@ function TerminalScreen(props: { currCombo: Combo; progress: number; gameState: 
 	const { currCombo, progress, gameState } = props;
 
 	return (
-		<Box display="flex" justifyContent="center" marginTop="20vh">
+		<Box display="flex" justifyContent="center" marginTop="20vh" maxWidth="100%">
 			{currCombo.map((ele, index) => {
 				const status = calculcateArrowStatus(gameState, progress, index);
 				return <ArrowDisplay key={index} type={ele} version={status} />;
@@ -267,13 +267,14 @@ function DifficultyControls(props: {
 }) {
 	const { policy, setPolicy, mute, setMute } = props;
 	return (
-		<Box display="flex" justifyContent="center">
+		<Box display="flex" justifyContent="center" marginBottom="100px">
 			<Select
 				onChange={(v): void => {
 					const difficultyStr = v.target.value;
 					setPolicy(DIFFICULTIES.find((v) => v.label === difficultyStr)!);
 				}}
 				value={policy.label}
+				style={{ marginRight: 20 }}
 			>
 				<MenuItem value={EASY.label}>{EASY.label}</MenuItem>
 				<MenuItem value={MEDIUM.label}>{MEDIUM.label}</MenuItem>
