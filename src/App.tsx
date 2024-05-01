@@ -72,9 +72,9 @@ function App() {
 	const [stateIndication, setStateIndication] = useState<StateIndication>(StateIndication.Normal);
 	const [mute, setMute] = useState(false);
 	const policyRef = useRef(policy);
-	const [click] = useSound("/click.mp3", { volume: mute ? 0.00000001 : 1 });
-	const [failureSound] = useSound("/failure.mp3", { volume: mute ? 0.0000001 : 1 });
-	const [successSound] = useSound("/success.mp3", { volume: mute ? 0.000001 : 1 });
+	const [click] = useSound("/divers/click.mp3", { volume: mute ? 0.00000001 : 1 });
+	const [failureSound] = useSound("/divers/failure.mp3", { volume: mute ? 0.0000001 : 1 });
+	const [successSound] = useSound("/divers/success.mp3", { volume: mute ? 0.000001 : 1 });
 
 	useEffect(() => {
 		policyRef.current = policy;
@@ -110,7 +110,6 @@ function App() {
 			}
 			const nextNeeded = combo[progress];
 			click();
-			console.log("key gotten!", nextNeeded, combo, progress, key);
 			if (key !== nextNeeded) {
 				initiateError();
 				return;
@@ -124,7 +123,7 @@ function App() {
 				return;
 			}
 		},
-		[combo, progress, success, setProgress, click]
+		[combo, progress, success, setProgress, click, initiateError, stateIndication]
 	);
 
 	useEffect(() => {
@@ -179,7 +178,6 @@ function TerminalScreen(props: { currCombo: Combo; progress: number; gameState: 
 		<Box display="flex" justifyContent="center" marginTop="20vh">
 			{currCombo.map((ele, index) => {
 				const status = calculcateArrowStatus(gameState, progress, index);
-				console.log(index, status, progress);
 				return <ArrowDisplay key={index} type={ele} version={status} />;
 			})}
 		</Box>
