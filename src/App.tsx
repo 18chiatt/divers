@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import "./App.css";
-import { Box, Button, FormControl, InputLabel, Select, Typography } from "@mui/material";
+import { Box, Button, Select } from "@mui/material";
 import MenuItem from "@mui/material/MenuItem";
 import useSound from "use-sound";
 import { createTheme, styled, ThemeProvider } from "@mui/material/styles";
@@ -153,10 +153,14 @@ const keys: Record<string, Direction> = {
 	a: Direction.left,
 	s: Direction.down,
 	d: Direction.right,
+	arrowright: Direction.right,
+	arrowleft: Direction.left,
+	arrowup: Direction.up,
+	arrowdown: Direction.down,
 };
 
 function identifyDirection(key: string): Direction | undefined {
-	return keys[key];
+	return keys[key.toLowerCase()];
 }
 
 function generateSequence(policy: Policy) {
@@ -281,7 +285,7 @@ function DifficultyControls(props: {
 				<MenuItem value={HARD.label}>{HARD.label}</MenuItem>
 			</Select>
 			<Button onClick={() => setMute(!mute)}>
-				{mute ? <VolumeUpIcon sx={{ color: "white" }} /> : <VolumeOff sx={{ color: "white" }} />}
+				{mute ? <VolumeOff sx={{ color: "white" }} /> : <VolumeUpIcon sx={{ color: "white" }} />}
 			</Button>
 		</Box>
 	);
