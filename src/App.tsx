@@ -93,7 +93,7 @@ function useHighscoreState(difficulty: string) {
 	return { highscore, proposeHighscore };
 }
 
-const MAX_TIMES_TO_CONSIDER = 2;
+const MAX_TIMES_TO_CONSIDER = 5;
 
 function useTimerState(difficulty: string) {
 	const [previousTime, setPreviousTime] = useState<number>(0);
