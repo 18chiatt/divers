@@ -5,7 +5,14 @@ import MenuItem from "@mui/material/MenuItem";
 import useSound from "use-sound";
 import { createTheme, styled, ThemeProvider } from "@mui/material/styles";
 import ForwardIcon from "@mui/icons-material/Forward";
-import { AccessTimeOutlined, EmojiEvents, TimelineOutlined, VolumeOff } from "@mui/icons-material";
+import {
+	AccessTimeOutlined,
+	EmojiEvents,
+	TimelineOutlined,
+	VisibilityOffOutlined,
+	VisibilityOutlined,
+	VolumeOff,
+} from "@mui/icons-material";
 import VolumeUpIcon from "@mui/icons-material/VolumeUp";
 
 const EASY: Policy = {
@@ -59,9 +66,9 @@ enum Direction {
 	right = "right",
 }
 
-function useHighscoreState(difficulty: string) {
+function useHighscoreState(difficulty: string, sightread: boolean) {
 	const [highscore, setHighscore] = useState<number | null>(null);
-	const key = `${difficulty}-${MAX_TIMES_TO_CONSIDER}`;
+	const key = `${difficulty}-${MAX_TIMES_TO_CONSIDER}${sightread ? "-sightread" : ""}`;
 
 	const updateHighscore = useCallback(
 		(newV: number | null) => {
@@ -95,11 +102,11 @@ function useHighscoreState(difficulty: string) {
 
 const MAX_TIMES_TO_CONSIDER = 5;
 
-function useTimerState(difficulty: string) {
+function useTimerState(difficulty: string, sightread: boolean) {
 	const [previousTime, setPreviousTime] = useState<number>(0);
 	const [startTime, setStartTime] = useState(new Date());
 	const [times, setTimes] = useState<number[]>([]);
-	const { highscore, proposeHighscore } = useHighscoreState(difficulty);
+	const { highscore, proposeHighscore } = useHighscoreState(difficulty, sightread);
 	const finish = useCallback(
 		(success: boolean) => {
 			const now = new Date();
@@ -137,7 +144,8 @@ function App() {
 	const [policy, setPolicy] = useState<Difficulty>(EASY);
 	const [stateIndication, setStateIndication] = useState<StateIndication>(StateIndication.Normal);
 	const [mute, setMute] = useState(false);
-	const { previousTime, finish, times, clearStats, beginTimer, highscore } = useTimerState(policy.label);
+	const [sightreadMode, setSightreadMode] = useState(false);
+	const { previousTime, finish, times, clearStats, beginTimer, highscore } = useTimerState(policy.label, sightreadMode);
 	const policyRef = useRef(policy);
 	const [click] = useSound("/divers/click.mp3", { volume: mute ? 0.00000001 : 1 });
 	const [failureSound] = useSound("/divers/failure.mp3", { volume: mute ? 0.0000001 : 1 });
@@ -160,7 +168,7 @@ function App() {
 	useEffect(() => {
 		reset();
 		clearStats();
-	}, [reset, policy, clearStats]);
+	}, [reset, policy, clearStats, sightreadMode]);
 
 	const initiateError = useCallback(() => {
 		setStateIndication(StateIndication.Error);
@@ -217,10 +225,22 @@ function App() {
 	return (
 		<ThemeProvider theme={darkTheme}>
 			<AppContainer>
-				<TerminalScreen currCombo={combo} progress={progress} gameState={stateIndication} />
+				<TerminalScreen
+					currCombo={combo}
+					progress={progress}
+					gameState={stateIndication}
+					sightreadMode={sightreadMode}
+				/>
 				<Box marginBottom="100px">
 					<Scores previousTime={previousTime} times={times} highscore={highscore} />
-					<DifficultyControls policy={policy} setPolicy={setPolicy} mute={mute} setMute={setMute} />
+					<DifficultyControls
+						policy={policy}
+						setPolicy={setPolicy}
+						mute={mute}
+						setMute={setMute}
+						sightread={sightreadMode}
+						setSightreadMode={setSightreadMode}
+					/>
 				</Box>
 			</AppContainer>
 		</ThemeProvider>
@@ -254,20 +274,30 @@ const DirectionsObj = Object.values(Direction);
 
 type Combo = Direction[];
 
-function TerminalScreen(props: { currCombo: Combo; progress: number; gameState: StateIndication }) {
-	const { currCombo, progress, gameState } = props;
+function TerminalScreen(props: {
+	currCombo: Combo;
+	progress: number;
+	gameState: StateIndication;
+	sightreadMode: boolean;
+}) {
+	const { currCombo, progress, gameState, sightreadMode } = props;
 
 	return (
 		<Box display="flex" justifyContent="center" marginTop="20vh" maxWidth="100%">
 			{currCombo.map((ele, index) => {
-				const status = calculcateArrowStatus(gameState, progress, index);
+				const status = calculcateArrowStatus(gameState, progress, index, sightreadMode);
 				return <ArrowDisplay key={index} type={ele} version={status} />;
 			})}
 		</Box>
 	);
 }
 
-function calculcateArrowStatus(gameState: StateIndication, progress: number, index: number): ArrowState {
+function calculcateArrowStatus(
+	gameState: StateIndication,
+	progress: number,
+	index: number,
+	sightreadMode: boolean
+): ArrowState {
 	if (gameState === StateIndication.Error) {
 		return "error";
 	}
@@ -280,10 +310,13 @@ function calculcateArrowStatus(gameState: StateIndication, progress: number, ind
 	if (progress > index) {
 		return "completed";
 	}
+	if (progress === 0 && sightreadMode && index > 0) {
+		return "invisible";
+	}
 	return "pending";
 }
 
-type ArrowState = "error" | "success" | "completed" | "pending";
+type ArrowState = "error" | "success" | "completed" | "pending" | "invisible";
 
 const ArrowProps = {
 	fontSize: "200px",
@@ -337,6 +370,10 @@ function calculateClassName(version: ArrowState) {
 
 	if (version === "completed") {
 		return "baseArrow completedArrow";
+	}
+
+	if (version === "invisible") {
+		return "baseArrow invisible";
 	}
 
 	return "baseArrow normalArrow";
@@ -401,8 +438,10 @@ function DifficultyControls(props: {
 	setPolicy: (newPolicy: Policy) => void;
 	mute: boolean;
 	setMute: (newV: boolean) => void;
+	sightread: boolean;
+	setSightreadMode: (newV: boolean) => void;
 }) {
-	const { policy, setPolicy, mute, setMute } = props;
+	const { policy, setPolicy, mute, setMute, setSightreadMode, sightread } = props;
 
 	return (
 		<Box display="flex" justifyContent="center" alignItems="center">
@@ -421,6 +460,22 @@ function DifficultyControls(props: {
 			<Button onClick={() => setMute(!mute)}>
 				{mute ? <VolumeOff sx={{ color: "white" }} /> : <VolumeUpIcon sx={{ color: "white" }} />}
 			</Button>
+			<Tooltip
+				title={
+					<>
+						<Typography fontWeight="600">Sightread Mode</Typography>
+						<Typography>Notes are only visible once time starts</Typography>{" "}
+					</>
+				}
+			>
+				<Button onClick={() => setSightreadMode(!sightread)}>
+					{sightread ? (
+						<VisibilityOutlined sx={{ color: "white" }} />
+					) : (
+						<VisibilityOffOutlined sx={{ color: "white" }} />
+					)}
+				</Button>
+			</Tooltip>
 		</Box>
 	);
 }
